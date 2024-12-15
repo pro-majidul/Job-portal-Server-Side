@@ -47,7 +47,7 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result)
     })
-    
+
     app.get('/jobs/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
@@ -89,6 +89,22 @@ async function run() {
     app.post('/job-applications', async (req, res) => {
       const newApplicant = req.body;
       const result = await JobApplicationCollection.insertOne(newApplicant);
+      const id = newApplicant.job_id;
+      const query = { _id: new ObjectId(id) };
+      const jobs = await JobCullection.findOne(query);
+      let NewCount = 0;
+      if (jobs.applicationCount) {
+        NewCount = jobs.applicationCount + 1;
+      } else {
+        NewCount = 1;
+      }
+      const filter = { _id: new ObjectId(id) };
+      const UpdateInfo = {
+        $set: {
+          applicationCount: NewCount
+        }
+      }
+      const UpdateJob = await JobCullection.updateOne(filter, UpdateInfo)
       res.send(result)
 
     })
