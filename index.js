@@ -62,13 +62,29 @@ async function run() {
       const email = req.query.email;
       const query = { applicant_email: email };
       const result = await JobApplicationCollection.find(query).toArray();
+      // fokira away to find the data 
+      for (const application of result) {
+        const id = application.job_id;
+        const query1 = { _id: new ObjectId(id) }
+        const job = await JobCullection.findOne(query1);
+      if(job){
+        application.title = job.title,
+        application.category = job.category,
+        application.company = job.company,
+        application.company_logo = job.company_logo,
+        application.location = job.location
+      }
+   
+      }
       res.send(result)
+     
     })
 
     app.post('/job-applications', async (req, res) => {
       const newApplicant = req.body;
       const result = await JobApplicationCollection.insertOne(newApplicant);
       res.send(result)
+
     })
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
