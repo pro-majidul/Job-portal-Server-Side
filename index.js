@@ -36,12 +36,18 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
 
-
+    // job data apis
     app.get('/jobs', async (req, res) => {
-      const cursor = JobCullection.find()
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { hr_email: email }
+      }
+      const cursor = JobCullection.find(query)
       const result = await cursor.toArray();
       res.send(result)
     })
+    
     app.get('/jobs/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
@@ -67,17 +73,17 @@ async function run() {
         const id = application.job_id;
         const query1 = { _id: new ObjectId(id) }
         const job = await JobCullection.findOne(query1);
-      if(job){
-        application.title = job.title,
-        application.category = job.category,
-        application.company = job.company,
-        application.company_logo = job.company_logo,
-        application.location = job.location
-      }
-   
+        if (job) {
+          application.title = job.title,
+            application.category = job.category,
+            application.company = job.company,
+            application.company_logo = job.company_logo,
+            application.location = job.location
+        }
+
       }
       res.send(result)
-     
+
     })
 
     app.post('/job-applications', async (req, res) => {
