@@ -29,6 +29,8 @@ async function run() {
   try {
 
     const JobCullection = client.db('jobs-portal').collection('jobs')
+    const JobApplicationCollection = client.db('jobs-portal').collection('job-applications')
+
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
@@ -52,6 +54,23 @@ async function run() {
       const result = await JobCullection.insertOne(newJobs)
       res.send(result)
     })
+
+    //  job application collection 
+
+    // get some data 
+    app.get('/job-application', async (req, res) => {
+      const email = req.query.email;
+      const query = { applicant_email: email };
+      const result = await JobApplicationCollection.find(query).toArray();
+      res.send(result)
+    })
+
+    app.post('/job-applications', async (req, res) => {
+      const newApplicant = req.body;
+      const result = await JobApplicationCollection.insertOne(newApplicant);
+      res.send(result)
+    })
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
