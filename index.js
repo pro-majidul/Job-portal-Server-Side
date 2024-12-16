@@ -109,6 +109,29 @@ async function run() {
 
     })
 
+
+    app.get('/job-applications/jobs/:jobId', async (req, res) => {
+      const id = req.params.jobId;
+      console.log(id);
+      const query = { job_id: id };
+      const result = await JobApplicationCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.patch('/job-applications/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const update = req.body;
+      const UpdateInfo = {
+        $set: {
+          status: update.status,
+        }
+      }
+      const result = await JobApplicationCollection.updateOne(query, UpdateInfo);
+      res.send(result)
+    })
+
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
