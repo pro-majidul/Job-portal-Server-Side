@@ -1,12 +1,37 @@
-const express = require('express')
-const cors = require('cors')
-require('dotenv').config();
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const express = require('express');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const app = express();
+require('dotenv').config();
 const port = process.env.PORT || 5000;
-app.use(cors())
-app.use(express.json())
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
+app.use(cors({
+  origin: 'http://localhost:5173 ',
+  credentials: true,
+}))
+app.use(express.json())
+app.use(cookieParser())
+
+
+const Varifivation = (req, res, next) => {
+  const Token = req?.cookies?.token;
+  if (!Token) {
+    return res.status(401).send({ message: 'Forbidden' })
+  }
+
+  jwt.verify(Token, process.env.Token_Secret, (err, decode) => {
+    if (err) {
+      return res.status(404).send({ message: 'Unathorize' })
+    }
+    req.user = decode;
+   
+    next()
+  })
+
+
+}
 
 
 
@@ -36,6 +61,20 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
 
+
+    // Auth related APIs
+    app.post('/jwt', async (req, res) => {
+      const data = req.body;
+      const Token = jwt.sign(data, process.env.Token_Secret, { expiresIn: '1hr' })
+      res.cookie('token', Token, { httpOnly: true, secure: false })
+        // res.cookie('Token', Token, { httpOnly: true, secure: false })
+        .send({ success: true })
+
+    })
+
+
+
+
     // job data apis
     app.get('/jobs', async (req, res) => {
       const email = req.query.email;
@@ -64,8 +103,12 @@ async function run() {
     //  job application collection 
 
     // get some data 
-    app.get('/job-application', async (req, res) => {
+    app.get('/job-application', Varifivation, async (req, res) => {
       const email = req.query.email;
+      if (req.user.email !== email) {
+        return res.status(403).send({ message: 'forbidden Unauthorize token' })
+      }
+      const token = req.cookies.token;
       const query = { applicant_email: email };
       const result = await JobApplicationCollection.find(query).toArray();
       // fokira away to find the data 
@@ -112,7 +155,6 @@ async function run() {
 
     app.get('/job-applications/jobs/:jobId', async (req, res) => {
       const id = req.params.jobId;
-      console.log(id);
       const query = { job_id: id };
       const result = await JobApplicationCollection.find(query).toArray();
       res.send(result);
